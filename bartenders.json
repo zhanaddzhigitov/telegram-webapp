@@ -1,0 +1,14 @@
+{
+  "bartenders": [
+    {
+      "name": "Зубаир",
+      "id": 5277601065,
+      "on_shift": false
+    },
+    {
+      "name": "Дима",
+      "id": "",
+      "on_shift": false
+    }
+  ]
+}

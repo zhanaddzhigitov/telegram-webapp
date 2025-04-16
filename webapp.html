@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Меню</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f3f4f6, #e2e8f0);
+      color: #333;
+    }
+    header {
+      background: #4CAF50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    /* Добавил стили для горизонтальной прокрутки категорий */
+    .tabs {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none; /* Скрыть скроллбар в Firefox */
+      -ms-overflow-style: none; /* Скрыть скроллбар в IE и Edge */
+    }
+    .tabs::-webkit-scrollbar {
+      display: none; /* Скрыть скроллбар в Chrome, Safari и Opera */
+    }
+    .tab {
+      flex: 0 0 auto; /* Устанавливает фиксированную ширину для элементов */
+      margin-right: 10px; /* Отступ между категориями */
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #4CAF50;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+    .tab:hover, .tab.active {
+      border-bottom: 3px solid #4CAF50;
+      color: #333;
+    }
+    .items {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .item {
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      position: relative; /* Для индикатора */
+    }
+    .item:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .item.selected {
+      background: #d1fae5;
+      border: 2px solid #4CAF50;
+    }
+    .item.selected::after {
+      content: "✔";
+      color: #4CAF50;
+      font-size: 18px;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    #selectedItems {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .selected-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .selected-item span {
+      flex: 1;
+      font-size: 16px;
+    }
+    .selected-item button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .selected-item button:hover {
+      background: #45a049;
+    }
+    button#sendOrder {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button#sendOrder:hover {
+      background: #45a049;
+    }
+    .additions-dropdown {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #f9fafb;
+    }
+
+    /* Стили для экрана выбора стола */
+    #tableSelectionScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #tableSelectionScreen h1 {
+      color: white;
+      font-size: 28px;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .table-button {
+      background: white;
+      color: #4CAF50;
+      border: none;
+      border-radius: 10px;
+      padding: 15px 20px;
+      margin: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .table-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div id="tableSelectionScreen">
+    <h1>Выберите номер стола</h1>
+    <div id="tableButtonsContainer">
+      <!-- Кнопки столов будут добавлены через JavaScript -->
+    </div>
+  </div>
+
+  <header>Меню</header>
+  <div class="container">
+    <select id="tableSelect" style="width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px;">
+      <option value="" disabled selected>Выберите номер стола</option>
+      <option value="VIP">VIP</option>
+      <option value="1">1</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="15">15</option>
+    </select>
+
+    <div class="tabs" id="categories"></div>
+    <input type="text" id="searchInput" placeholder="Поиск..." style="width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px;" oninput="filterItemsWithSuggestions()" />
+    <ul id="suggestions" style="list-style: none; padding: 0; margin: 0; background: white; border: 1px solid #ccc; border-radius: 5px; max-height: 150px; overflow-y: auto; display: none;"></ul>
+    <div class="items" id="items">
+      <div class="item">
+        <span>Чизкейк</span>
+        <select class="topping-selector">
+          <option value="Карамельный">Карамельный</option>
+          <option value="Клубничный">Клубничный</option>
+          <option value="Шоколадный">Шоколадный</option>
+          <option value="Малиновый">Малиновый</option>
+        </select>
+      </div>
+    </div>
+    <div id="selectedItems"></div>
+    <button id="sendOrder" onclick="sendOrder()">Отправить заказ</button>
+  </div>
+
+  <script>
+    const tables = ["VIP", "1", "3", "4", "5", "6", "7", "8", "11", "12", "13", "15"];
+
+    function renderTableSelection() {
+      const container = document.getElementById("tableButtonsContainer");
+      tables.forEach(table => {
+        const button = document.createElement("button");
+        button.className = "table-button";
+        button.textContent = table;
+        button.onclick = () => {
+          localStorage.setItem("selectedTable", table);
+          document.getElementById("tableSelectionScreen").style.display = "none";
+          document.getElementById("tableSelect").value = table;
+        };
+        container.appendChild(button);
+      });
+    }
+
+    function checkTableSelection() {
+      document.getElementById("tableSelectionScreen").style.display = "flex";
+    }
+
+    renderTableSelection();
+    checkTableSelection();
+
+    const categoriesDiv = document.getElementById("categories");
+    const itemsDiv = document.getElementById("items");
+    const selectedItemsDiv = document.getElementById("selectedItems");
+
+    fetch('menu.json')
+      .then(response => response.json())
+      .then(data => {
+        window.menuData = data; // Сохраняем данные в глобальную переменную для поиска и добавления позиций
+        renderCategories(data);
+      })
+      .catch(error => console.error('Ошибка загрузки меню:', error));
+
+    function renderCategories(data) {
+      categoriesDiv.innerHTML = ""; // Очищаем категории перед рендерингом
+      for (const category in data) {
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        tab.textContent = category;
+        tab.onclick = () => renderItems(category, data[category]);
+        categoriesDiv.appendChild(tab);
+      }
+    }
+
+    function renderItems(category, block) {
+      itemsDiv.innerHTML = "";
+
+      if (block.categories) {
+        for (const subCategory in block.categories) {
+          const subCategoryTitle = document.createElement("h3");
+          subCategoryTitle.textContent = subCategory;
+          subCategoryTitle.style.marginTop = "20px";
+          subCategoryTitle.style.color = "#4CAF50";
+          itemsDiv.appendChild(subCategoryTitle);
+
+          block.categories[subCategory].forEach(item => {
+            const div = document.createElement("div");
+            div.className = "item";
+            div.textContent = item;
+            div.onclick = () => {
+              const label = `${subCategory}: ${item}`;
+              const existingItem = selected.find(x => x.label === label);
+              if (existingItem) {
+                existingItem.count += 1;
+              } else {
+                selected.push({ label, additions: [], count: 1 });
+              }
+              updateSelectedItems();
+            };
+            itemsDiv.appendChild(div);
+          });
+        }
+      } else if (block.volume) {
+        block.items.forEach(item => {
+          block.volume.forEach(v => {
+            const div = document.createElement("div");
+            div.className = "item";
+            div.textContent = `${item} (${v})`;
+            div.onclick = () => {
+              const label = `${category}: ${item} (${v})`;
+              const existingItem = selected.find(x => x.label === label);
+              if (existingItem) {
+                existingItem.count += 1;
+              } else {
+                selected.push({ label, additions: [], count: 1 });
+              }
+              updateSelectedItems();
+            };
+            itemsDiv.appendChild(div);
+          });
+        });
+      } else {
+        block.items.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "item";
+          div.textContent = item;
+          div.onclick = () => {
+            const label = `${category}: ${item}`;
+            const existingItem = selected.find(x => x.label === label);
+            if (existingItem) {
+              existingItem.count += 1;
+            } else {
+              selected.push({ label, additions: [], count: 1 });
+            }
+            updateSelectedItems();
+          };
+          itemsDiv.appendChild(div);
+        });
+      }
+    }
+
+    const additions = ["Мёд", "Мята", "Чабрец", "Корица", "Лимон", "Молоко"];
+    const selected = []; // Убедитесь, что массив selected определен глобально
+
+    function updateSelectedItems() {
+      selectedItemsDiv.innerHTML = "<h3>Выбранные позиции:</h3>";
+      selected.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "selected-item";
+
+        const label = document.createElement("span");
+        label.textContent = `${item.label} x${item.count}`;
+
+        const minusButton = document.createElement("button");
+        minusButton.textContent = "-";
+        minusButton.onclick = () => {
+          if (item.count > 1) {
+            item.count -= 1;
+          } else {
+            selected.splice(index, 1);
+          }
+          updateSelectedItems();
+        };
+
+        const plusButton = document.createElement("button");
+        plusButton.textContent = "+";
+        plusButton.onclick = () => {
+          item.count += 1;
+          updateSelectedItems();
+        };
+
+        div.appendChild(minusButton);
+        div.appendChild(label);
+        div.appendChild(plusButton);
+        selectedItemsDiv.appendChild(div);
+      });
+
+      // Add comment section
+      const commentDiv = document.createElement("div");
+      commentDiv.className = "comment-section";
+
+      const commentLabel = document.createElement("label");
+      commentLabel.textContent = "Добавить комментарий:";
+
+      const commentInput = document.createElement("textarea");
+      commentInput.id = "orderComment";
+      commentInput.placeholder = "Введите ваш комментарий...";
+
+      commentDiv.appendChild(commentLabel);
+      commentDiv.appendChild(commentInput);
+      selectedItemsDiv.appendChild(commentDiv);
+    }
+
+    function sendOrder() {
+      const table = document.getElementById("tableSelect").value;
+      if (!table) {
+        alert("Пожалуйста, выберите номер стола!");
+        return;
+      }
+      if (selected.length === 0) {
+        alert("Выберите хотя бы одну позицию");
+        return;
+      }
+      const comment = document.getElementById("commentInput").value;
+      const order = `Стол: ${table}\n\n` + selected.map(e => e.label + (e.additions.length > 0 ? `\n▪️ Добавки: ${e.additions.join(", ")}` : "")).join("\n\n") + (comment ? `\n\nКомментарий: ${comment}` : "");
+      if (confirm("Вы уверены, что хотите отправить заказ?")) {
+        Telegram.WebApp.sendData(order);
+      }
+    }
+
+    function filterItemsWithSuggestions() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const suggestions = document.getElementById("suggestions");
+      suggestions.innerHTML = "";
+
+      if (query.trim() === "") {
+        suggestions.style.display = "none";
+        return;
+      }
+
+      const allItems = [];
+      for (const category in window.menuData) {
+        const block = window.menuData[category];
+        if (block.categories) {
+          for (const subCategory in block.categories) {
+            block.categories[subCategory].forEach(item => {
+              allItems.push({ label: `${subCategory}: ${item}`, category, item });
+            });
+          }
+        } else {
+          block.items.forEach(item => {
+            block.volume?.forEach(v => {
+              allItems.push({ label: `${category}: ${item} (${v})`, category, item, volume: v });
+            });
+            if (!block.volume) {
+              allItems.push({ label: `${category}: ${item}`, category, item });
+            }
+          });
+        }
+      }
+
+      const filteredItems = allItems.filter(entry => entry.label.toLowerCase().includes(query));
+
+      if (filteredItems.length > 0) {
+        suggestions.style.display = "block";
+        filteredItems.forEach(entry => {
+          const li = document.createElement("li");
+          li.textContent = entry.label;
+          li.style.padding = "10px";
+          li.style.cursor = "pointer";
+          li.onmouseover = () => li.style.background = "#f0f0f0";
+          li.onmouseout = () => li.style.background = "white";
+          li.onclick = () => {
+            document.getElementById("searchInput").value = "";
+            suggestions.style.display = "none";
+            addItemToMenu(entry.category, entry.item, entry.volume);
+          };
+          suggestions.appendChild(li);
+        });
+      } else {
+        suggestions.style.display = "none";
+      }
+    }
+
+    function addItemToMenu(category, item, volume) {
+      const label = volume ? `${category}: ${item} (${volume})` : `${category}: ${item}`;
+      const existingItem = selected.find(x => x.label === label);
+      if (existingItem) {
+        existingItem.count += 1;
+      } else {
+        selected.push({ label, additions: [], count: 1 });
+      }
+      updateSelectedItems();
+    }
+
+    function filterItems() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const allItems = document.querySelectorAll(".item");
+      allItems.forEach(item => {
+        if (item.textContent.toLowerCase().includes(query)) {
+          item.style.display = "block";
+        } else {
+          item.style.display = "none";
+        }
+      });
+    }
+  </script>
+</body>
+</html>
